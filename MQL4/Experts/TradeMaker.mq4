@@ -1,10 +1,10 @@
 //+------------------------------------------------------------------+
-//|                                                 SaneFXTrader.mq4 |
-//|                  Copyright © 2009, Powerful Internet Enterprises |
-//|                                          http://forex.my-pie.biz |
+//|                                                   TradeMaker.mq4 |
+//|                                    Copyright © 2015, Mark Hewitt |
+//|                                      http://www.markhewitt.co.za |
 //+------------------------------------------------------------------+
-#property copyright "Copyright © 2009, Powerful Internet Enterprises"
-#property link      "http://forex.my-pie.biz"
+#property copyright "Copyright © 2015, Mark Hewitt"
+#property link      "http://www.markhewitt.co.za"
 
 #include "../Include/detectXXX.mqh"
 #include "../Include/TradeFunctions.mqh"
