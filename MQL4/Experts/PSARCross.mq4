@@ -18,14 +18,38 @@ bool initVariables = true;
 bool hasNewBar = false;
 datetime previousBar ;
 
+string buttonClr = "buttonclr";
+
 //+------------------------------------------------------------------+
 //| expert initialization function                                   |
 //+------------------------------------------------------------------+
 int init()
 {
+   int btnLeft = 220;
+   int btnSpace = 55;
+   
+   // button to clear the template background after I've seen the signal
+   button( buttonClr, "Reset", btnLeft );   
+   btnLeft += btnSpace;
+   
    return 0;
 }
 
+void button(string name, string label, int left, int width = 50) {
+   ObjectCreate(0,name,OBJ_BUTTON,0,100,100);
+   ObjectSetInteger(0,name,OBJPROP_COLOR,clrWhite);
+   ObjectSetInteger(0,name,OBJPROP_BGCOLOR,clrGray);
+   ObjectSetInteger(0,name,OBJPROP_XDISTANCE,left);
+   ObjectSetInteger(0,name,OBJPROP_YDISTANCE,0);
+   ObjectSetInteger(0,name,OBJPROP_XSIZE,width);
+   ObjectSetInteger(0,name,OBJPROP_YSIZE,16);
+   ObjectSetString(0,name,OBJPROP_FONT,"Arial");
+   ObjectSetString(0,name,OBJPROP_TEXT,label);
+   ObjectSetInteger(0,name,OBJPROP_FONTSIZE,10);
+   ObjectSetInteger(0,name,OBJPROP_SELECTABLE,0);
+}
+  
+  
 //+------------------------------------------------------------------+
 //| expert start function                                            |
 //+------------------------------------------------------------------+
@@ -68,18 +92,44 @@ int start()
               thisClose < tenkansen && thisClose < kijunsen &&   // bar must close below all ichimoku lines
               (thisOpen > tenkansen || thisOpen > kijunsen)    // bar must have opened above one of the lines, so it has crossed this bar
             ) {
-            Print("SELL");    
-         } else if ( side == PSAR_UNDER &&          // psar above so we are trying to sell
+            ChartSetInteger(ChartID(),CHART_BRING_TO_TOP,0,true); 
+            ChartSetInteger(ChartID(),CHART_COLOR_BACKGROUND,clrMidnightBlue);   
+            PlaySound("stops.wav");
+        } else if ( side == PSAR_UNDER &&          // psar above so we are trying to sell
               thisClose > tenkansen && thisClose > kijunsen &&   // bar must close above buy all ichimoku lines
               (thisOpen < tenkansen || thisOpen < kijunsen)    // bar must have opened below one of the lines, so it has crossed this bar
             ) {
+            ChartSetInteger(ChartID(),CHART_BRING_TO_TOP,0,true); 
+            ChartSetInteger(ChartID(),CHART_COLOR_BACKGROUND,clrMidnightBlue);   
             Print("BUY");
+            PlaySound("stops.wav");
          }
       }
          
    } 
    return 0;
 }
+
+void OnChartEvent(const int id,
+                  const long &lparam,
+                  const double &dparam,
+                  const string &sparam)
+ {
+   // trap the click on the clear button event
+   if ( id == CHARTEVENT_OBJECT_CLICK ) {
+      string clickedChartObject=sparam;
+      
+      if ( clickedChartObject == buttonClr ) {
+         // reset the background to our default empty
+         ChartSetInteger(ChartID(),CHART_COLOR_BACKGROUND,clrNONE);
+             
+         // reset state of button to unclicked
+         ObjectSetInteger(0,buttonClr,OBJPROP_STATE,0);
+         ChartRedraw();
+      }
+   }
+}
+   
 
 /**
  * Returns if the psar is above or below the bar
