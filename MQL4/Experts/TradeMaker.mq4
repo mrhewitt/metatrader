@@ -616,6 +616,22 @@ bool tradeBalances(int trade) {
       return(false);
    }
    
+   // we use this to flag if an attempt to trade failed so that we can try again next time
+   // normally this is a reqoute so we want to EA to try on each tick until our order goes in
+   bool tradeSuccessful = true;
+   
+   // this uses the "old" format still, one line per account, allowing us to trade
+   // several accounts on one station (unline stats balances above which uses only the first account)
+   // format is:
+   // [accountname];[risks];[balance1];[balance2];[balance3];[balance4]
+   // [accountname];[risks];[balance1];[balance2];[balance3];[balance4]
+   // ....
+   // END
+   // 
+   // Each account can have up to four "balances" sub-accounts that are used is there is a trade already
+   // on this account, typically not used, its easier to manage multiple accounts (lines)
+   //
+      
    TradeHeader = FileReadString(handle);                   // trade account name
    while ( TradeHeader != "END" ) {
       Losses = StringToInteger(FileReadString(handle));                        // risks to apply to this account
@@ -624,21 +640,18 @@ bool tradeBalances(int trade) {
       Balances[2] = StrToDouble( FileReadString(handle) );    // 3
       Balances[3] = StrToDouble( FileReadString(handle) );    // 4
       Print ("Account ",TradeHeader, "; Risk ", Losses, "; Balances: $", Balances[0]," , $",Balances[1]," , $",Balances[2]," , $",Balances[3]);
+      
       if ( trade == OP_BUY ) {
-         if ( !goLong() ) {
-            return false;
-         }
+         tradeSuccessful = goLong();
       } else {
-         if ( !goShort() ) {
-            return false;
-         }
+         tradeSuccessful = goShort();
       }
       
       TradeHeader = FileReadString(handle);                   // trade account name
    }
    FileClose(handle);
    
-   return (true);
+   return (tradeSuccessful);
    
 //   Print( "Balanced: M:", TradableBalance, "; U:",USD, "; E:",EUR, "; G:",GBP, "; J:",JPY, "; A:",AUD, "; F:",Futures, "; C:",Commodities );
 }

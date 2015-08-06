@@ -64,6 +64,32 @@ void OnDeinit(const int reason)
 //---
    
   }
+  
+   
+//+------------------------------------------------------------------+
+//| Handle chart events (click of the reset button)                                            |
+//+------------------------------------------------------------------+
+void OnChartEvent(const int id,
+                  const long &lparam,
+                  const double &dparam,
+                  const string &sparam)
+ {
+   // trap the click on the clear button event
+   if ( id == CHARTEVENT_OBJECT_CLICK ) {
+      string clickedChartObject=sparam;
+      
+      if ( clickedChartObject == buttonClr ) {
+         // reset the background to our default empty
+         ChartSetInteger(ChartID(),CHART_COLOR_BACKGROUND,clrNONE);
+             
+         // reset state of button to unclicked
+         ObjectSetInteger(0,buttonClr,OBJPROP_STATE,0);
+         ChartRedraw();
+      }
+   }
+}
+   
+   
 //+------------------------------------------------------------------+
 //| Expert tick function                                             |
 //+------------------------------------------------------------------+
