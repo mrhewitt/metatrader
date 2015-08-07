@@ -42,7 +42,10 @@ int detect50( string symbol, int timeframe ) {
 
 }
 
-
+/**
+ * Detects a "real" arrow trade, that is an arrow at a turning point, so the previous
+ * bar must be one of the opposite type (kinda crude for now)
+ */
 int detectArrow( string symbol, int timeFrame, int shift = 1 )
 {
       double buyArrow = iCustom(symbol,timeFrame,"GoldTradePro",false,0,shift);
@@ -63,6 +66,22 @@ int detectArrow( string symbol, int timeFrame, int shift = 1 )
       return (TRADE_ARROW_NONE);
 }
 
+/**
+ * This is a raw detection of a trade arrow, just the arrow iself
+ */
+int barHasArrow( string symbol, int timeFrame, int shift = 1 )
+{
+      double buyArrow = iCustom(symbol,timeFrame,"GoldTradePro",false,0,shift);
+      double sellArrow = iCustom(symbol,timeFrame,"GoldTradePro",false,1,shift);
+
+      if ( buyArrow != 2147483647 ) {
+         return (TRADE_ARROW_BUY);
+      }
+      if ( sellArrow != 2147483647 ) {
+         return (TRADE_ARROW_SELL);
+      }
+      return (TRADE_ARROW_NONE);
+}
 
 int detectMACD(string symbol, int timeframe)
 {
@@ -162,3 +181,46 @@ double findRecentLow(string symbol = NULL, int timeframe = 0, int shift = 0) {
    return low;
 }
 
+/**
+ * Determine if the most recent bar that closed cross the given line
+ * Note this works only on the current active chart as the line
+ * must be an object on the chart
+ */
+ bool crossedTrendline(string lineName, int timeframe, int shift = 1) {
+   // get the price of the line at the last bar
+   double price;
+   if ( ObjectType(lineName) == OBJ_HLINE ) {
+      price = ObjectGet(lineName, OBJPROP_PRICE1);
+   } else {
+      price = ObjectGetValueByShift(lineName,1);
+   }
+   double open = iOpen(Symbol(),timeframe,shift);
+   double close = iClose(Symbol(),timeframe,shift);
+   // is that price between the open and close of the last bar?
+   return ( (open > price && close < price) || (close > price && open < price) );
+ }
+ 
+ /**
+  * Determine if the bar cross the moving average
+  */
+ bool detectMaCross(string symbol, int timeframe, int ma_period, int ma_method = MODE_SMA, int shift = 1) {
+   double price = iMA(symbol,timeframe,ma_period,0,ma_method,PRICE_CLOSE,shift);
+   double open = iOpen(symbol,timeframe,shift);
+   double close = iClose(symbol,timeframe,shift);
+   return ( (open > price && close < price) || (open < price && close > price) );
+ }
+ 
+ /**
+  * Detects if given bar closed above or below the MA
+  */
+ int detectBarToMA(string symbol, int timeframe, int ma_period, int ma_method = MODE_SMA, int shift = 1) {
+   double price = iMA(symbol,timeframe,ma_period,0,ma_method,PRICE_CLOSE,shift);
+   double open = iOpen(symbol,timeframe,shift);
+   double close = iClose(symbol,timeframe,shift);
+   if ( open > price && close > price ) {
+      return (TRADE_ARROW_BUY);
+   } else if ( open < price && close < price ) {
+      return (TRADE_ARROW_SELL);
+   }
+   return (TRADE_ARROW_NONE);
+ }
