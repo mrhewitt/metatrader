@@ -211,15 +211,16 @@ double findRecentLow(string symbol = NULL, int timeframe = 0, int shift = 0) {
  }
  
  /**
-  * Detects if given bar closed above or below the MA
+  * Detects if given bar opened and closed above or below the MA, and is the opposite of the previous
+  * bar, i.e is this is a bull bar the bar before it must be a bear bar
   */
  int detectBarToMA(string symbol, int timeframe, int ma_period, int ma_method = MODE_SMA, int shift = 1) {
    double price = iMA(symbol,timeframe,ma_period,0,ma_method,PRICE_CLOSE,shift);
    double open = iOpen(symbol,timeframe,shift);
    double close = iClose(symbol,timeframe,shift);
-   if ( open > price && close > price ) {
+   if ( open > price && close > price && isBearBar(symbol,timeframe,shift-1) ) {
       return (TRADE_ARROW_BUY);
-   } else if ( open < price && close < price ) {
+   } else if ( open < price && close < price && isBullBar(symbol,timeframe,shift-1) ) {
       return (TRADE_ARROW_SELL);
    }
    return (TRADE_ARROW_NONE);

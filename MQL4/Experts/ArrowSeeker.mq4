@@ -14,6 +14,7 @@
 bool initVariables = true;
 bool hasNewBar = false;
 datetime barM1 = NULL;     // for testing
+datetime barM15 = NULL;
 datetime barM30 = NULL;
 datetime barH1 = NULL;
 
@@ -28,6 +29,7 @@ int OnInit()
    if ( initVariables )
    {
       barM1 = iTime(Symbol(),PERIOD_M1,0);
+      barM15 = iTime(Symbol(),PERIOD_M15,0);
       barM30 = iTime(Symbol(),PERIOD_M30,0);
       barH1 = iTime(Symbol(),PERIOD_H1,0);
       initVariables = false;
@@ -109,10 +111,11 @@ void OnTick()
    * Actual code for detecting intraday moves
    */
    
-   if ( !detect(barM30,PERIOD_M30) ) {
-      detect(barH1,PERIOD_H1);
+   if ( !detectLimited(barM15,PERIOD_M15) ) {
+      if ( !detect(barM30,PERIOD_M30) ) {
+         detect(barH1,PERIOD_H1);
+      }
    }
-   
 }
 
 bool detect(datetime& barTime, int period) {
@@ -135,7 +138,7 @@ bool detect(datetime& barTime, int period) {
         if ( objType == OBJ_HLINE || objType == OBJ_TREND ) {
 
           bool tlBreak = crossedTrendline(name,period);      // did this bar cross over this line?
-        if ( tlBreak ) Print("trendline break");
+          if ( tlBreak ) Print("trendline break");
         
           // first lets see if there is an arrow on a trendline break
           if ( tlBreak && barHasArrow(Symbol(),period) != TRADE_ARROW_NONE ) {
@@ -154,18 +157,25 @@ bool detect(datetime& barTime, int period) {
                showAlert(period,"Horizontal Bounce");
                return true;
           }
-          
-          // if we crossed a big MA, and the next bar is a pullback but still shows on the same side as the cross alert
-          if ( detectMaCross(Symbol(),period,200,MODE_SMA,2) && detectBarToMA(Symbol(),period,200) ||
-               detectMaCross(Symbol(),period,89,MODE_SMA,2) && detectBarToMA(Symbol(),period,89) ||
-               detectMaCross(Symbol(),period,50,MODE_EMA,2) && detectBarToMA(Symbol(),period,50,MODE_EMA)
-             ) {
-               showAlert(period,"Moving Average Wave");
-               return true;
-          }
         }
       }
      }
+     
+     return ( detectLimited(barTime, period) );
+   }
+   return false;    
+}
+
+bool detectLimited(datetime& barTime, int period) {
+   if ( hasNewBar(barTime,Symbol(),period) ) {
+       // if we crossed a big MA, and the next bar is a pullback but still shows on the same side as the cross alert
+       if ( detectMaCross(Symbol(),period,200,MODE_SMA,2) && detectBarToMA(Symbol(),period,200) ||
+            detectMaCross(Symbol(),period,89,MODE_SMA,2) && detectBarToMA(Symbol(),period,89) ||
+            detectMaCross(Symbol(),period,50,MODE_EMA,2) && detectBarToMA(Symbol(),period,50,MODE_EMA)
+          ) {
+            showAlert(period,"Moving Average Wave");
+            return true;
+       }
    }
    return false;    
 }
