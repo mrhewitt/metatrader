@@ -83,6 +83,7 @@ void OnChartEvent(const int id,
       if ( clickedChartObject == buttonClr ) {
          // reset the background to our default empty
          ChartSetInteger(ChartID(),CHART_COLOR_BACKGROUND,clrNONE);
+         ChartSetSymbolPeriod( ChartID(), Symbol(), PERIOD_M30 );
              
          // reset state of button to unclicked
          ObjectSetInteger(0,buttonClr,OBJPROP_STATE,0);
