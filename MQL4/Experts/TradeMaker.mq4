@@ -224,6 +224,7 @@ void showLines(int shift=1, double sl = 0, double p = 0) {
    cleanLines();
    loadStatBalances();
    
+   double minStop = minimumStop();
    double tp;
    if ( p == 0 ) {      // only set entry price if not given
       if ( shift == 0 ) {
@@ -239,14 +240,22 @@ void showLines(int shift=1, double sl = 0, double p = 0) {
        sl = iHigh(Symbol(),Period(),shift) + symbolPoints(Symbol());
      }
      tp = p - ( (sl-p) * 1.5 );
+     // if the stoploss is less than the required minimum set it to be the minimum instead
+     if ( sl - p < minStop ) {
+       sl = p + minStop;
+     }
     } else {
       // bull  bar - long trade
       if ( sl == 0 ) {      // only set SL if not given
          sl = iLow(Symbol(),Period(),shift) - symbolPoints(Symbol());
       }
      tp = p + ( (p-sl) * 1.5 );
+     // if the stoploss is less than the required minimum set it to be the minimum instead
+     if ( p - sl < minStop ) {
+       sl = p - minStop;
+     }
    }
-   
+      
    addLine("entry", p, clrSkyBlue );
    addLine("sl", sl, clrCrimson );
    addLine("tp", tp, clrLimeGreen );
@@ -470,6 +479,18 @@ void showStats() {
            tp = rate - (MathAbs(rate - sl)*1.5);
        }
     }
+    
+   // check to ensure the stoploss is greater than the minimum, if not
+   // then we adjust the sl level until it meets this requirement
+   double minStop = minimumStop();
+   if ( MathAbs(rate-sl) < minStop ) {
+      if ( rate > sl ) {      // are we buying, i.e. sl is lower than rate?
+         sl = rate - minStop;
+      } else {
+         sl = rate + minStop;
+      }
+      ObjectSet("sl", OBJPROP_PRICE1, sl);
+   }  
     
    // if no order or sell then we just assume the Bid rate 
    

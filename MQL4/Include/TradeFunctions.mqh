@@ -135,6 +135,14 @@ void goBreakEven(string symbol) {
    }
 }
 
+/**
+ * Get the minimum stoploss allowed, by default this is 8 * [spread]
+ * @note Maybe make this configurable at a later stage
+ */
+double minimumStop() {
+   return 8 * (Ask - Bid);
+}
+
 void printPairData() {
    Print("Symbol=",Symbol());
    Print("Low day price=",MarketInfo(Symbol(),MODE_LOW));
