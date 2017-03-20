@@ -13,6 +13,8 @@
 #define TRADE_ARROW_BUY OP_BUY
 #endif
 #define TRADE_TYPE_ALL -1
+
+double averageSpread = 0;
            
 int period(string p) {
    if ( p == "MN" ) { return (PERIOD_MN1); }
@@ -22,91 +24,6 @@ int period(string p) {
    if ( p == "H1" ) { return (PERIOD_H1); }
    if ( p == "M15" ) { return (PERIOD_M15); }
    return (PERIOD_H1);
-}
-
-double symbolPoints(string symbol) {
-   if ( symbol == "GOLD" ) { return (0.1); }
-   if ( symbol == "GOLDgr" ) { return (0.001); }
-   if ( symbol == "SILVER" ) { return (0.01); }
-   if ( StringSubstr(symbol,0,3) == "#CL" ||       // old oil
-        StringSubstr(symbol,0,3) == "#LC" ||       // old brent
-        StringSubstr(symbol,0,7) == "#US_Oil" ||   // new oil
-        StringSubstr(symbol,0,7) == "#UK_Oil" ||   // new brent
-        StringFind(symbol,"JPY") != -1 ) 
-   {
-      return (0.01);
-   } 
-   if ( StringSubstr(symbol,0,3) == "#EP" ||       // old S&P
-        StringSubstr(symbol,0,3) == "#EN" ||       // old nasdaq
-        StringSubstr(symbol,0,7) == "#S&P500" ||   // new s&p
-        StringSubstr(symbol,0,7) == "#NAS100")     // new nasdaq
-   {
-      return (0.25);
-   }
-   if ( StringSubstr(symbol,0,3) == "#FD" ||       // old DAX contract
-        StringSubstr(symbol,0,3) == "#FF" ||       // old FTSI contract
-        StringSubstr(symbol,0,6) == "#GER30" ||    // new FTSI contract
-        StringSubstr(symbol,0,6) == "#UK100" ||    // new FTSI contract
-        StringSubstr(symbol,0,6) == "#FRA40"
-      ) 
-   {
-      return (0.5);
-   }
-   if ( StringSubstr(symbol,0,6) == "#EUR50" ||
-        StringSubstr(symbol,0,5) == "#DJ30" ||
-        StringSubstr(symbol,0,6) == "#SWI20" ||
-        StringSubstr(symbol,0,6) == "#Cocoa" ||
-        StringSubstr(symbol,0,10) == "#Germany50"
-   ) {
-      return 1;
-   }
-    if ( StringSubstr(symbol,0,4) == "#JPN" ) {
-      return 5;
-   }
-   if ( StringSubstr(symbol,0,7) == "#Coffee" ) {
-      return 0.05;
-   }
-   if ( StringSubstr(symbol,0,3) == "#CN" || 
-        StringSubstr(symbol,0,3) == "#SN" ||
-        StringSubstr(symbol,0,5) == "#Corn" ||
-        StringSubstr(symbol,0,5) == "#Soyb" ||
-        StringSubstr(symbol,0,6) == "#Wheat"
-      ) {
-      return 0.25;
-   }
-
-   if ( StringSubstr(symbol,0,4) == "#US$" ) {
-      return 0.005;
-   }
-   if ( StringSubstr(symbol,0,7) == "#NatGas" ) {
-      return 0.001;
-   }
-   if ( StringSubstr(symbol,0,6)  == "#China" ||
-        StringSubstr(symbol,0,10) == "#GerTech30" ||
-        StringSubstr(symbol,0,11) == "#Portugal20" ||
-        StringSubstr(symbol,0,9)  == "#Sweden30"
-      ) {
-      return 0.10;
-   }
-   if ( StringSubstr(symbol,0,1) == "#" ) {        // all other futures, mostly for stock CFDs
-     return (0.01);
-   }
-   if ( MathAbs(Bid-Ask) > 0.0050 ) {
-      return (0.001);
-   }
-   return (0.0001);
-}
-
-bool isFutures(string symbol = NULL) {
-   if ( symbol == NULL ) {
-      symbol = Symbol();
-   }
-   
-   if ( StringSubstr(symbol,0,1) == "#" ) {        // all other futures, mostly for stock CFDs
-     return (true);
-   } else {
-      return false;
-   } 
 }
 
 double getTradeValue(double points, double lots) {
@@ -135,12 +52,20 @@ void goBreakEven(string symbol) {
    }
 }
 
+void averageOutSpread() {
+   if ( averageSpread == 0 ) {   
+      averageSpread = (Ask - Bid);
+   } else {
+      averageSpread = (averageSpread + (Ask - Bid))/2;
+   }
+}
+
 /**
  * Get the minimum stoploss allowed, by default this is 8 * [spread]
  * @note Maybe make this configurable at a later stage
  */
 double minimumStop() {
-   return 8 * (Ask - Bid);
+   return 4 * averageSpread;
 }
 
 void printPairData() {
