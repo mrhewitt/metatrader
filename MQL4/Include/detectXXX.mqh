@@ -393,13 +393,14 @@ double findRecentLow(string symbol = NULL, int timeframe = 0, int shift = 0) {
 double symbolPoints(string symbol) {
    if ( symbol == "GOLD" ) { return (0.1); }
    if ( symbol == "GOLDgr" ) { return (0.001); }
-   if ( symbol == "SILVER" ) { return (0.01); }
+   if ( symbol == "SILVER" ) { return (0.001); }
    if ( StringSubstr(symbol,0,3) == "#CL" ||       // old oil
         StringSubstr(symbol,0,3) == "#LC" ||       // old brent
         StringSubstr(symbol,0,7) == "#US_Oil" ||   // new oil
         StringSubstr(symbol,0,7) == "#UK_Oil" ||   // new brent
         symbol == "WTI" ||                         // spot oil
-        symbol == "EURBUND" ||                     // Window BUND CFD
+        symbol == "EURBUND" ||                     // Windsor BUND CFD
+        symbol == "#Germany30" ||                  // FxPro DAX CFD
         StringFind(symbol,"JPY") != -1 ) 
    {
       return (0.01);
