@@ -11,7 +11,8 @@
 extern double Lots = 0.01;
 extern int Magic = 12345;
 extern int Magic2 = 54321;
-
+extern bool T3xDEMA = false;
+extern bool T3xT3 = true;
 
 datetime previousBar ;
 
@@ -113,15 +114,15 @@ void OnTick()
 void buy() {
    while(IsTradeContextBusy()) Sleep(50);
    RefreshRates();
-  OrderSend(Symbol(), OP_BUY, Lots, Ask, 0, 0, 0,"T3xDEMA",Magic);
-  OrderSend(Symbol(), OP_BUY, Lots, Ask, 0, 0, 0,"T3xT3",Magic2);
+  if ( T3xDEMA ) { OrderSend(Symbol(), OP_BUY, Lots, Ask, 0, 0, 0,"T3xDEMA",Magic); }
+  if ( T3xT3 ) { OrderSend(Symbol(), OP_BUY, Lots, Ask, 0, 0, 0,"T3xT3",Magic2); }
 }
 
 void sell() {
    while(IsTradeContextBusy()) Sleep(50);
    RefreshRates();
-   OrderSend(Symbol(), OP_SELL, Lots, Bid, 0, 0, 0,"T3xDEMA",Magic); 
-   OrderSend(Symbol(), OP_SELL, Lots, Bid, 0, 0, 0,"T3xT3",Magic2); 
+   if ( T3xDEMA ) { OrderSend(Symbol(), OP_SELL, Lots, Bid, 0, 0, 0,"T3xDEMA",Magic); }
+   if ( T3xT3 ) { OrderSend(Symbol(), OP_SELL, Lots, Bid, 0, 0, 0,"T3xT3",Magic2);  }
 }
 
 double DEMA() {
