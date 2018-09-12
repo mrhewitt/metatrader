@@ -41,7 +41,7 @@ int OnInit()
    
    // lookback to start of the chart and move forward applying the trade logic to all bars
    // so we can get a better idea of how the expert would have applied our trade rules
-   for ( int i = Bars - 50; i--; i > 0 ) {
+   for ( int i = Bars - 50; i > 0; i-- ) {
       autoTradePatterns(i);
    } 
    
@@ -227,11 +227,11 @@ void sell() {
 
 // This function return the value true if the current bar/candle was just formed
 // Inspired by: simplefx2.mq4, http://www.GetForexSoftware.com
-bool newBar(datetime& previousBar,string symbol,int timeframe)
+bool newBar(datetime& pBar,string symbol,int timeframe)
 {
-   if ( previousBar < iTime(symbol,timeframe,0) )
+   if ( pBar < iTime(symbol,timeframe,0) )
    {
-      previousBar = iTime(symbol,timeframe,0);
+      pBar = iTime(symbol,timeframe,0);
       return(true);
    }
    else
@@ -245,7 +245,7 @@ void autoTradePatterns(int currentBar = 0) {
 
       if ( openOrder() ) {
          barsSinceEntry++;
-         fourBarTrail();
+        // fourBarTrail();
       } else {
       
          int tradeType = barType(currentBar+1,false); 
@@ -349,10 +349,14 @@ void autoTradePatterns(int currentBar = 0) {
  * Returns true if there is an open order, and select its
  */
 bool openOrder() {
-   if ( OrdersTotal() > 0 ) {
-      OrderSelect(0, SELECT_BY_POS);
-      return true;
+   for (int cc = OrdersTotal() - 1; cc >= 0; cc--)
+   {
+      if (!OrderSelect(cc, SELECT_BY_POS) ) continue;
+      if ( OrderMagicNumber() == Magic ) {
+         return true;
+      }
    }
+
    return false;
 }
 
@@ -402,7 +406,7 @@ int T3(int shift) {
       return OP_SELL;
    }
    
-   return "T3MA invalid options error";
+   Print ( "T3MA invalid options error");
    return -1;
 }
 
