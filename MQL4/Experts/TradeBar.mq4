@@ -152,7 +152,7 @@ void OnChartEvent(const int id,
         }
         
         if ( sparam == "btnFlatten" ) {
-           flatten() ; 
+           flatten(-1,false) ; 
         } 
         
         if ( sparam == "btnLong" ) {
@@ -202,27 +202,32 @@ void reset() {
    ChartBackColorSet(clrBlack);
 }
 
-void flatten( int onlyTradesOf = -1 ) {
+void flatten( int onlyTradesOf = -1, bool wholePosition = true ) {
 
    for (int cc = OrdersTotal() - 1; cc >= 0; cc--)
    {
       if (!OrderSelect(cc, SELECT_BY_POS) ) continue;
       if ( OrderMagicNumber() == Magic && OrderSymbol() == Symbol() && (onlyTradesOf == -1 || OrderType() == onlyTradesOf) ) {
          OrderClose(OrderTicket(),OrderLots(),(OrderType() == OP_BUY ? Bid : Ask),0);
+         if ( !wholePosition ) { break; }
       }
    }
    
-   reset();
+   if ( OrdersTotal() == 0 ) { 
+      reset();
+   }
 }
 
 void buy() {
   flatten(OP_SELL);
-  OrderSend(Symbol(), OP_BUY, Lots, Ask, 0, iLow(Symbol(),Period(),1) - 0.0001, 0, "ERB", Magic);
+  OrderSend(Symbol(), OP_BUY, Lots, Ask, 0, iLow(Symbol(),Period(),1) - 0.0001, Ask + 0.0010, "ERB", Magic);
+  OrderSend(Symbol(), OP_BUY, Lots, Ask, 0, iLow(Symbol(),Period(),1) - 0.0001, Ask + 0.0016, "ERB", Magic);
 }
 
 void sell() {
    flatten(OP_BUY);
-   OrderSend(Symbol(), OP_SELL, Lots, Bid, 0, iHigh(Symbol(),Period(),1) + 0.0001, 0, "ERB", Magic); 
+   OrderSend(Symbol(), OP_SELL, Lots, Bid, 0, iHigh(Symbol(),Period(),1) + 0.0001, Bid - 0.0010, "ERB", Magic); 
+   OrderSend(Symbol(), OP_SELL, Lots, Bid, 0, iHigh(Symbol(),Period(),1) + 0.0001, Bid - 0.0016, "ERB", Magic); 
 }
 
 // This function return the value true if the current bar/candle was just formed
