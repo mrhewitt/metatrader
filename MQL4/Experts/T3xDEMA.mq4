@@ -9,10 +9,12 @@
 #property strict
 
 extern double Lots = 0.01;
+extern bool FibLots = true;
 extern int Magic = 12345;
 extern int Magic2 = 54321;
 extern bool T3xDEMA = false;
 extern bool T3xT3 = true;
+extern double Space = 0.0006;
 
 datetime previousBar ;
 
@@ -46,6 +48,8 @@ void OnTick()
   {
 //---
    double nearestOrder = 0;
+   double fibLot1 = 0;
+   double fibLot2 = Lots;
    if ( OrdersTotal() > 0 ) {
       double dema = DEMA();
      // Print(StringToDouble(dema));
@@ -55,10 +59,16 @@ void OnTick()
          if (!OrderSelect(cc, SELECT_BY_POS) ) continue;
          
          if ( (OrderMagicNumber() == Magic) || (OrderMagicNumber() == Magic2) ) {
+            if ( OrderLots() <= fibLot2 ) {
+               fibLot1 = MathMax(fibLot1,OrderLots());
+            } else { 
+               fibLot2 = OrderLots();
+            }
+            
             if ( OrderType() == OP_BUY ) {
-               nearestOrder = MathMin(nearestOrder,OrderOpenPrice());
+               nearestOrder = ( nearestOrder == 0 ? OrderOpenPrice() : MathMin(nearestOrder,OrderOpenPrice()) );
             } else {
-               nearestOrder = ( nearestOrder == 0 ? OrderOpenPrice() : MathMax(nearestOrder,OrderOpenPrice()) );
+               nearestOrder = MathMax(nearestOrder,OrderOpenPrice());
             }
          }
          
@@ -86,24 +96,24 @@ void OnTick()
     if ( newBar(previousBar,Symbol(),Period()) ) {
         // bear bar? then check if bar closed above t3 envelope
         if ( Close[1] == Low[1] && Close[2] == High[2]) {
-           if ( nearestOrder > 0 && Open[0] < nearestOrder + 0.0005 ) {
-              Print("Open ", DoubleToStr(Open[0]), " too close to order at ", DoubleToStr(nearestOrder), " by ", DoubleToStr(nearestOrder + 0.0005));
+           if ( nearestOrder > 0 && Open[0] < nearestOrder + Space ) {
+              Print("Open ", DoubleToStr(Open[0]), " too close to order at ", DoubleToStr(nearestOrder), " by ", DoubleToStr(nearestOrder + Space));
            } else {
               double upper = iCustom(Symbol(),Period(),"T3MA Dynamic Envelope",30,0.4,100,4,2,1); 
               // Print( "T3 U:", DoubleToStr(upper) ); 
            // if closed above the envelope trade short to the dema
               if ( Close[1] >= upper ) {
-                 sell();
+                 sell(getLots(fibLot1,fibLot2));
               }
            }   
         } else if ( Close[1] == High[1] && Close[2] == Low[2] ) {
           // if bull candle then check if its below then envelopte
-           if ( nearestOrder > 0 && Open[0] > nearestOrder - 0.0005 ) {
-              Print("Open ", DoubleToStr(Open[0]), " too close to order at ", DoubleToStr(nearestOrder), " by ", DoubleToStr(nearestOrder - 0.0005));
+           if ( nearestOrder > 0 && Open[0] > nearestOrder - Space ) {
+              Print("Open ", DoubleToStr(Open[0]), " too close to order at ", DoubleToStr(nearestOrder), " by ", DoubleToStr(nearestOrder - Space));
            } else {
                double lower = iCustom(Symbol(),Period(),"T3MA Dynamic Envelope",30,0.4,100,4,1,1);  
                if ( Close[1] <= lower ) {
-                  buy();
+                  buy(getLots(fibLot1,fibLot2));
                }
            }     
         }  
@@ -111,18 +121,26 @@ void OnTick()
   }
 //+------------------------------------------------------------------+
 
-void buy() {
+void buy(double lots) {
    while(IsTradeContextBusy()) Sleep(50);
    RefreshRates();
-  if ( T3xDEMA ) { OrderSend(Symbol(), OP_BUY, Lots, Ask, 0, 0, 0,"T3xDEMA",Magic); }
-  if ( T3xT3 ) { OrderSend(Symbol(), OP_BUY, Lots, Ask, 0, 0, 0,"T3xT3",Magic2); }
+  if ( T3xDEMA ) { OrderSend(Symbol(), OP_BUY, lots, Ask, 0, 0, 0,"T3xDEMA",Magic); }
+  if ( T3xT3 ) { OrderSend(Symbol(), OP_BUY, lots, Ask, 0, 0, 0,"T3xT3",Magic2); }
 }
 
-void sell() {
+void sell(double lots) {
    while(IsTradeContextBusy()) Sleep(50);
    RefreshRates();
-   if ( T3xDEMA ) { OrderSend(Symbol(), OP_SELL, Lots, Bid, 0, 0, 0,"T3xDEMA",Magic); }
-   if ( T3xT3 ) { OrderSend(Symbol(), OP_SELL, Lots, Bid, 0, 0, 0,"T3xT3",Magic2);  }
+   if ( T3xDEMA ) { OrderSend(Symbol(), OP_SELL, lots, Bid, 0, 0, 0,"T3xDEMA",Magic); }
+   if ( T3xT3 ) { OrderSend(Symbol(), OP_SELL, lots, Bid, 0, 0, 0,"T3xT3",Magic2);  }
+}
+
+double getLots(double fibLot1,double fibLot2) {
+   if ( FibLots ) {
+      return ( fibLot1+fibLot2 > 0 ? fibLot1+fibLot2 : Lots ); 
+   } else {
+      return (Lots);
+   }
 }
 
 double DEMA() {
